@@ -6,12 +6,12 @@
      http://atk4.com/doc/ref
 
  **ATK4*****************************************************
-   This file is part of Agile Toolkit 4 
+   This file is part of Agile Toolkit 4
     http://www.atk4.com/
-  
+
    (c) 2008-2011 Agile Technologies Ireland Limited
    Distributed under Affero General Public License v3
-   
+
    If you are using this file in YOUR web software, you
    must make your make source code for YOUR web software
    public.
@@ -19,7 +19,7 @@
    See LICENSE.txt for more information
 
    You can obtain non-public copy of Agile Toolkit 4 at
-    http://www.atk4.com/commercial/ 
+    http://www.atk4.com/commercial/
 
  *****************************************************ATK4**/
 class Grid_Basic extends CompleteLister {
@@ -190,7 +190,7 @@ class Grid_Basic extends CompleteLister {
 		@$this->columns[$field]['thparam'].=' style="text-align: right"';
 	}
 	function format_money($field){
-		$m=(float)$this->current_row[$field];
+		$m=round((float)$this->current_row[$field],2);
 		$this->current_row[$field]=number_format($m,2);
 		if($m<0){
 			$this->setTDParam($field,'style/color','red');
@@ -271,7 +271,7 @@ class Grid_Basic extends CompleteLister {
 		if(!@$this->current_row[$field]){
 			$this->current_row[$field]=$column['descr'];
 		}
-		// TODO: 
+		// TODO:
 		// reformat this using Button, once we have more advanced system to bypass rendering of
 		// sub-elements.
 		// $this->current_row[$field]=$this->add('Button',null,false)
@@ -300,7 +300,7 @@ class Grid_Basic extends CompleteLister {
 
         if(!isset($this->columns[$field]['refid'])){
             // TODO: test
-        
+
             $refid=$this->getController();
             if($refid)$refid=$refid->getModel();
             //if($refid)$refid=$refid->entity_code;
@@ -757,7 +757,7 @@ class Grid_Basic extends CompleteLister {
 					}
 
 					$header->append('cols',$header_col->render());
-                    
+
 				}
 			}
 		}
