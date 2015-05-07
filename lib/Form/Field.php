@@ -489,6 +489,13 @@ class Form_Field_Number extends Form_Field_Line {
     }
 }
 class Form_Field_Money extends Form_Field_Line {
+	function normalize(){
+		$v = $this->get();
+        // remove non-numbers
+		$v = preg_replace('/[^0-9\.]/','', $v);
+		$this->set($v);
+	}
+
 	function getInput($attr=array()){
 		return parent::getInput(array_merge(array('value'=>number_format($this->value,2)),$attr));
 	}
