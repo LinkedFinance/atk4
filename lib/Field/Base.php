@@ -1,79 +1,93 @@
 <?php
+/**
+ * Undocumented.
+ */
+class Field_Base extends AbstractObject
+{
+    public $auto_track_element = true;
 
-class Field_Base extends AbstractObject {
-    public $auto_track_element=true;
+    protected $table = null;
+    public $actual_field = null;
 
-    protected $table=null;
-    public $actual_field=null;
+    public $type = 'string';
+    public $readonly = false;
+    public $system = false;
+    public $group = null;
+    public $mandatory = false;
+    public $has_default_value = false;
+    public $defaultValue = null;
+    public $allowHTML = false;
 
-    public $type='string';
-    public $readonly=false;
-    public $system=false;
-    public $group=null;
-    public $mandatory=false;
-    public $has_default_value=false;
-    public $defaultValue=null;
-    public $allowHTML=false;
-    public $listData=null;
-    public $theModel=null;
-    public $description=null;
-    public $sortable=false;
-    public $searchable=false;
+    /** @var array|null */
+    public $listData = null;
 
-    public $hint=null;
-    public $editable=true;
-    public $hidden=false;
-    public $visible=true; // ???
-    public $display=null;
-    public $caption=null;
-    public $placeholder=null;
-    public $emptyText=null; // ???
+    public $theModel = null;
+    public $description = null;
+    public $sortable = false;
+    public $searchable = false;
 
+    public $hint = null;
+    public $editable = true;
+    public $hidden = false;
+    public $visible = true; // ???
+    public $display = null;
+    public $caption = null;
+    public $placeholder = null;
+    public $emptyText = null; // ???
+
+    // Callbacks
+    public $onField = null;
+
+    /** @var Model */
+    public $owner;
 
     /**
      * Implementation of generic setter-getter method which supports "UNDEFINED"
-     * constant. This method is used by all other sette-getters
+     * constant. This method is used by all other sette-getters.
      *
      * @param string $type  Corresponds to the name of property of a field
      * @param mixed  $value New value for a property.
      *
-     * @return mixed new or current pperty (if value is undefined)
+     * @return mixed|$this new or current pperty (if value is UNDEFINED)
      */
-    function setterGetter($type, $value = UNDEFINED)
+    public function setterGetter($type, $value = UNDEFINED)
     {
         if ($value === UNDEFINED) {
             return $this->$type;
         }
-        $this->$type=$value;
+        $this->$type = $value;
+
         return $this;
     }
 
     /**
-     * Sets the value of the field. Identical to $model[$fieldname]=$value
+     * Sets the value of the field. Identical to $model[$fieldname]=$value.
      *
      * @param mixed $value new value
      *
      * @return Field $this
      */
-    function set($value = null)
+    public function set($value = null)
     {
         $this->owner->set($this->short_name, $value);
+
         return $this;
     }
 
     /**
      * Get the value of the field of a loaded model. If model is not loaded
-     * will return default value instead
+     * will return default value instead.
      *
      * @return mixed current value of a field
      */
-    function get()
+    public function get()
     {
         if ($this->owner->loaded()
             || isset($this->owner->data[$this->short_name])
         ) {
             return $this->owner->get($this->short_name);
         }
+
         return $this->defaultValue();
     }
 
@@ -83,9 +97,9 @@ class Field_Base extends AbstractObject {
      *
      * @return string descriptive
      */
-    function __toString()
+    public function __toString()
     {
-        return get_class($this). " ['".$this->short_name."']".' of '. $this->owner;
+        return get_class($this)." ['".$this->short_name."']".' of '.$this->owner;
     }
 
     /**
@@ -95,51 +109,52 @@ class Field_Base extends AbstractObject {
      *
      * @param string $t new value
      *
-     * @return string current value if $t=UNDEFINED
+     * @return string|$this current value if $t=UNDEFINED
      */
-    function type($t = UNDEFINED)
+    public function type($t = UNDEFINED)
     {
         return $this->setterGetter('type', $t);
     }
 
     /**
      * Sets field caption which will be used by forms, grids and other view
-     * elements as a label. The caption will be localized through api->_
+     * elements as a label. The caption will be localized through $app->_().
      *
      * @param string $t new value
      *
-     * @return string current value if $t=UNDEFINED
+     * @return string|$this current value if $t=UNDEFINED
      */
-    function caption($t = UNDEFINED)
+    public function caption($t = UNDEFINED)
     {
-        if ($t===UNDEFINED && !$this->caption) {
+        if ($t === UNDEFINED && !$this->caption) {
             return ucwords(strtr(
                 preg_replace('/_id$/', '', $this->short_name),
                 '_',
                 ' '
             ));
         }
+
         return $this->setterGetter('caption', $t);
     }
     /**
-     * Sets field hint which will be used by forms
+     * Sets field hint which will be used by forms.
      *
      * @param string $t new value
      *
-     * @return string current value if $t=UNDEFINED
+     * @return string|$this current value if $t=UNDEFINED
      */
-    function hint($t = UNDEFINED)
+    public function hint($t = UNDEFINED)
     {
         return $this->setterGetter('hint', $t);
     }
     /**
-     * Sets field placeholder (gray text inside input when it's empty)
+     * Sets field placeholder (gray text inside input when it's empty).
      *
      * @param string $t new value
      *
-     * @return string current value if $t=UNDEFINED
+     * @return string|$this current value if $t=UNDEFINED
      */
-    function placeholder($t = UNDEFINED)
+    public function placeholder($t = UNDEFINED)
     {
         return $this->setterGetter('placeholder', $t);
     }
@@ -152,9 +167,9 @@ class Field_Base extends AbstractObject {
      *
      * @param string $t new value
      *
-     * @return string current value if $t=UNDEFINED
+     * @return string|$this current value if $t=UNDEFINED
      */
-    function group($t = UNDEFINED)
+    public function group($t = UNDEFINED)
     {
         return $this->setterGetter('group', $t);
     }
@@ -162,13 +177,13 @@ class Field_Base extends AbstractObject {
     /**
      * Read only setting will affect the way how field is presented by views.
      * While model field is still writable directly, the Form will not try to
-     * change the value of this field
+     * change the value of this field.
      *
-     * @param boolean $t new value
+     * @param bool $t new value
      *
-     * @return boolean current value if $t=UNDEFINED
+     * @return bool|$this current value if $t=UNDEFINED
      */
-    function readonly($t = UNDEFINED)
+    public function readonly($t = UNDEFINED)
     {
         return $this->setterGetter('readonly', $t);
     }
@@ -179,37 +194,25 @@ class Field_Base extends AbstractObject {
      * model. If you would like that your model complains about empty fields,
      * you should edit beforeSave hook.
      *
-     * @param boolean $t new value
+     * @param bool $t new value
      *
-     * @return boolean current value if $t=UNDEFINED
+     * @return bool|$this current value if $t=UNDEFINED
      */
-    function mandatory($t = UNDEFINED)
+    public function mandatory($t = UNDEFINED)
     {
         return $this->setterGetter('mandatory', $t);
     }
 
     /**
-     * obsolete
-     *
-     * @param boolean $t new value
-     *
-     * @return boolean current value if $t=UNDEFINED
-     */
-    function required($t = UNDEFINED)
-    {
-        return $this->mandatory($t);
-    }
-
-    /**
      * Set editable to false, if you want to exclude field from forms
      * or other means of editing data. This does not affect the actual model
-     * values
+     * values.
      *
-     * @param boolean $t new value
+     * @param bool $t new value
      *
-     * @return boolean current value if $t=UNDEFINED
+     * @return bool|$this current value if $t=UNDEFINED
      */
-    function editable($t = UNDEFINED)
+    public function editable($t = UNDEFINED)
     {
         return $this->setterGetter('editable', $t);
     }
@@ -219,11 +222,11 @@ class Field_Base extends AbstractObject {
      * By default all tags are stripped, setting this property to true will
      * no longer strip tags.
      *
-     * @param boolean $t new value
+     * @param bool $t new value
      *
-     * @return boolean current value if $t=UNDEFINED
+     * @return bool|$this current value if $t=UNDEFINED
      */
-    function allowHTML($t = UNDEFINED)
+    public function allowHTML($t = UNDEFINED)
     {
         return $this->setterGetter('allowHTML', $t);
     }
@@ -232,11 +235,11 @@ class Field_Base extends AbstractObject {
      * Setting searchable(true) will instruct Filter and similar views that
      * it should be possible to perform search by this field.
      *
-     * @param boolean $t new value
+     * @param bool $t new value
      *
-     * @return boolean current value if $t=UNDEFINED
+     * @return bool|$this current value if $t=UNDEFINED
      */
-    function searchable($t = UNDEFINED)
+    public function searchable($t = UNDEFINED)
     {
         return $this->setterGetter('searchable', $t);
     }
@@ -245,11 +248,11 @@ class Field_Base extends AbstractObject {
      * Will instruct Grid and similar views that the sorting controls must be
      * enabled for this field.
      *
-     * @param boolean $t new value
+     * @param bool $t new value
      *
-     * @return boolean current value if $t=UNDEFINED
+     * @return bool|$this current value if $t=UNDEFINED
      */
-    function sortable($t = UNDEFINED)
+    public function sortable($t = UNDEFINED)
     {
         return $this->setterGetter('sortable', $t);
     }
@@ -260,15 +263,15 @@ class Field_Base extends AbstractObject {
      * You might be using add-ons or might have created your own field class.
      * If you would like to use it to present the field, use display(). If you
      * specify string it will be used by all views, otherwise specify it as
-     * associtive array:
+     * associtive array:.
      *
      *     $field->display(array('form'=>'line','grid'=>'button'));
      *
      * @param mixed $t new value
      *
-     * @return mixed current value if $t=UNDEFINED
+     * @return mixed|$this current value if $t=UNDEFINED
      */
-    function display($t = UNDEFINED)
+    public function display($t = UNDEFINED)
     {
         return $this->setterGetter('display', $t);
     }
@@ -295,9 +298,9 @@ class Field_Base extends AbstractObject {
      *
      * @param string $t new value
      *
-     * @return string current value if $t=UNDEFINED
+     * @return string|$this current value if $t=UNDEFINED
      */
-    function actual($t = UNDEFINED)
+    public function actual($t = UNDEFINED)
     {
         return $this->setterGetter('actual_field', $t);
     }
@@ -308,26 +311,27 @@ class Field_Base extends AbstractObject {
      * making it dissapear from Grids and Forms. A good examples of system
      * fields are "id" or "created_dts".
      *
-     * @param boolean $t new value
+     * @param bool $t new value
      *
-     * @return boolean current value if $t=UNDEFINED
+     * @return bool|$this current value if $t=UNDEFINED
      */
-    function system($t = UNDEFINED)
+    public function system($t = UNDEFINED)
     {
-        if ($t===true) {
+        if ($t === true) {
             $this->editable(false)->visible(false);
         }
+
         return $this->setterGetter('system', $t);
     }
 
     /**
      * Hide field. Not sure!
      *
-     * @param boolean $t new value
+     * @param bool $t new value
      *
-     * @return boolean current value if $t=UNDEFINED
+     * @return bool|$this current value if $t=UNDEFINED
      */
-    function hidden($t = UNDEFINED)
+    public function hidden($t = UNDEFINED)
     {
         return $this->setterGetter('hidden', $t);
     }
@@ -338,9 +342,9 @@ class Field_Base extends AbstractObject {
      *
      * @param int $t new value
      *
-     * @return int current value if $t=UNDEFINED
+     * @return int|$this current value if $t=UNDEFINED
      */
-    function length($t = UNDEFINED)
+    public function length($t = UNDEFINED)
     {
         return $this->setterGetter('length', $t);
     }
@@ -350,24 +354,27 @@ class Field_Base extends AbstractObject {
      * data. This does not change how model works, which will simply avoid
      * including unchanged field into insert/update queries.
      *
-     * @param boolean $t new value
+     * @param bool $t new value
      *
-     * @return boolean current value if $t=UNDEFINED
+     * @return bool|$this current value if $t=UNDEFINED
      */
-    function defaultValue($t = UNDEFINED)
+    public function defaultValue($t = UNDEFINED)
     {
-        if($t !== UNDEFINED)$this->has_default_value=true;
+        if ($t !== UNDEFINED) {
+            $this->has_default_value = true;
+        }
+
         return $this->setterGetter('defaultValue', $t);
     }
 
     /**
-     * Controls field appearance in Grid or similar views
+     * Controls field appearance in Grid or similar views.
      *
-     * @param boolean $t new value
+     * @param bool $t new value
      *
-     * @return boolean current value if $t=UNDEFINED
+     * @return bool|$this current value if $t=UNDEFINED
      */
-    function visible($t = UNDEFINED)
+    public function visible($t = UNDEFINED)
     {
         return $this->setterGetter('visible', $t);
     }
@@ -377,31 +384,32 @@ class Field_Base extends AbstractObject {
      * checkbox area, autocomplete). You may also use enum(). This setting
      * is typically used with a static falues (Male / Female), if your field
      * values could be described through a different model, use setModel()
-     * or better yet - hasOne()
+     * or better yet - hasOne().
      *
      * @param array $t Array( id => val )
      *
-     * @return array current value if $t=UNDEFINED
+     * @return array|$this current value if $t=UNDEFINED
      */
-    function listData($t = UNDEFINED)
+    public function listData($t = UNDEFINED)
     {
-
         if ($this->type() === 'boolean' && $t !== UNDEFINED) {
-
-            $this->owner->addHook('afterLoad,afterUpdate,afterInsert',function($m)use($t) {
+            $this->owner->addHook('afterLoad,afterUpdate,afterInsert', function ($m) use ($t) {
                 // Normalize boolean data
-                $val=array_search($m->data[$this->short_name], $t);
-                if($val===false)return; // do nothing
-                $m->data[$this->short_name]=(boolean)!$val;
+                $val = array_search($m->data[$this->short_name], $t);
+                if ($val === false) {
+                    return;
+                } // do nothing
+                $m->data[$this->short_name] = (boolean) !$val;
             });
 
-            $this->owner->addHook('beforeUpdate,beforeInsert',function($m,&$data)use($t) {
+            $this->owner->addHook('beforeUpdate,beforeInsert', function ($m, &$data) use ($t) {
                 // De-Normalize boolean data
-                $val = (int)(!$data[$this->short_name]);
-                if(!isset($t[$val]))return;  // do nothing
-                $data[$this->short_name]=$t[$val];
+                $val = (int) (!$data[$this->short_name]);
+                if (!isset($t[$val])) {
+                    return;
+                }  // do nothing
+                $data[$this->short_name] = $t[$val];
             });
-
         }
 
         return $this->setterGetter('listData', $t);
@@ -415,11 +423,24 @@ class Field_Base extends AbstractObject {
      *
      * @param string $t new value
      *
-     * @return string current value if $t=UNDEFINED
+     * @return string|$this current value if $t=UNDEFINED
      */
-    function emptyText($t = UNDEFINED)
+    public function emptyText($t = UNDEFINED)
     {
         return $this->setterGetter('emptyText', $t);
+    }
+
+    /**
+     * Pass a callback to onField() which is executed with the argument
+     * containing a field view, when model is associated with a form.
+     *
+     * @param callback $c new value
+     *
+     * @return string|$this current value if $t=UNDEFINED
+     */
+    public function onField($c = UNDEFINED)
+    {
+        return $this->setterGetter('onField', $c);
     }
 
     /**
@@ -431,38 +452,38 @@ class Field_Base extends AbstractObject {
      *
      * @param string $t new value
      *
-     * @return string current value if $t=UNDEFINED
+     * @return string|$this current value if $t=UNDEFINED
      */
-    function setModel($t = UNDEFINED)
+    public function setModel($t = UNDEFINED)
     {
         return $this->setterGetter('theModel', $t);
     }
 
     /**
      * Returns current model. This is different than other setters getters,
-     * but it's done to keep consistency with the rest of Agile Toolkit
+     * but it's done to keep consistency with the rest of Agile Toolkit.
      *
      * @return string current associated model Class
      */
-    function getModel()
+    public function getModel()
     {
         return $this->theModel;
     }
 
     /**
-     * Same as listData()
+     * Same as listData().
      *
      * @param array $t Array( id => val )
      *
      * @return array current value if $t=UNDEFINED
      */
-    function setValueList($t)
+    public function setValueList($t)
     {
         return $this->listData($t);
     }
 
     /**
-     * Similar to listData() but accepts array of values instead of hash:
+     * Similar to listData() but accepts array of values instead of hash:.
      *
      *     listData(array(1=>'Male', 2=>'Female'));
      *     enum(array('male','female'));
@@ -474,40 +495,87 @@ class Field_Base extends AbstractObject {
      *
      * @return array current value if $t=UNDEFINED
      */
-    function enum($t){ return $this->listData(array_combine($t,$t)); }
+    public function enum($t)
+    {
+        return $this->listData(array_combine($t, $t));
+    }
 
-    /* If is set, It containes the correct table that stores this field. Used in join environment */
-    function table($t=UNDEFINED) {
+    /**
+     * If is set, it contains the correct table that stores this field.
+     * Used in join environment.
+     *
+     * @param string $t
+     *
+     * @return string|$this
+     */
+    public function table($t = UNDEFINED)
+    {
         return $this->setterGetter('table', $t);
     }
 
     /**
-     * TODO: sanitize the value.
-     * This is used in Controller_Data_SQL to sanitize the value forwarded to dsql
+     * This is used in Controller_Data_SQL to sanitize the value forwarded to dsql.
+     * @todo sanitize the value.
+     *
+     * @param mixed $value
+     *
+     * @return mixed
      */
-    function sanitize($value) {
+    public function sanitize($value)
+    {
         return $value;
     }
 
-    /** Converts true/false into boolean representation according to the "enum" */
-    function getBooleanValue($value){
-        if($value===null)return null;
-        if($this->listData){
-            reset($this->listData);
-            list($junk,$yes_value)=each($this->listData);
-            @list($junk,$no_value)=each($this->listData);
-            if($no_value===null)$no_value='';
-            /* not to convert N to Y */
-            if ($yes_value == $value){
-                return $yes_value;
-            }
-            if ($no_value == $value){
-                return $no_value;
-            }
-        }else{
-            $yes_value=1;$no_value=0;
+    /**
+     * Converts true/false into boolean representation according to the "enum"
+     *
+     * @param mixed $value
+     *
+     * @return int|null
+     */
+    public function getBooleanValue($value)
+    {
+        if ($value === null) {
+            return;
         }
 
-        return $value?$yes_value:$no_value;
+        if ($this->listData) {
+            reset($this->listData);
+            list(, $yes_value) = each($this->listData);
+            list(, $no_value) = each($this->listData);
+            if ($no_value === null) {
+                $no_value = '';
+            }
+            /* not to convert N to Y */
+            if ($yes_value == $value) {
+                return $yes_value;
+            }
+            if ($no_value == $value) {
+                return $no_value;
+            }
+        } else {
+            $yes_value = 1;
+            $no_value = 0;
+        }
+
+        return $value ? $yes_value : $no_value;
     }
+
+
+
+    // {{{ Deprecated methods
+
+    /**
+     * @deprecated 4.3.0 use mandatory() instead
+     *
+     * @param bool $t new value
+     *
+     * @return bool|$this current value if $t=UNDEFINED
+     */
+    public function required($t = UNDEFINED)
+    {
+        return $this->mandatory($t);
+    }
+
+    // }}}
 }

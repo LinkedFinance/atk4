@@ -1,38 +1,29 @@
-<?php // vim:ts=4:sw=4:et:fdm=marker
+<?php
 /**
  * Base class for Command-Line Applications. The purpose of Application class
- * is to initialize all the other classes and aid their connectivity. API
- * class can be accessed from any object through $this->api property.
+ * is to initialize all the other classes and aid their connectivity. APP
+ * class can be accessed from any object through $this->app property.
  *
- * API classes are derrived from AbstractView because normally they would have
+ * APP classes are derrived from AbstractView because normally they would have
  * a template and will be able to render themselves consistently to any other
- * view in the system. Although App_CLI does not do any rendering, it's descendants
- * do
+ * view in the system. Although App_CLI does not do any rendering, it's
+ * descendants do.
  *
- * @link http://agiletoolkit.org/doc/api
-*//*
-==ATK4===================================================
-   This file is part of Agile Toolkit 4
-    http://agiletoolkit.org/
-
-   (c) 2008-2013 Agile Toolkit Limited <info@agiletoolkit.org>
-   Distributed under Affero General Public License v3 and
-   commercial license.
-
-   See LICENSE or LICENSE_COM for more information
- =====================================================ATK4=*/
+ * @link http://agiletoolkit.org/doc/app
+ */
 class App_CLI extends AbstractView
 {
     /**
      * In a typical application, one connection to the database is enough for
-     * majority of applications. Calling $api->dbConnect will read Database
+     * majority of applications. Calling $app->dbConnect will read Database
      * data from config file and store it in $db property. If you requires
      * a more advanced connectivity or multiple connections, you can manually
      * initialize more database connections.
      *
      * @see dbConnect()
+     * @var DB
      */
-    public $db=null;
+    public $db = null;
 
     /**
      * App_CLI implements a API for accessing your application configuration.
@@ -40,6 +31,7 @@ class App_CLI extends AbstractView
      *
      * @see getConfig()
      * @see readConfig()
+     * @var array
      */
     public $config = array();
 
@@ -48,6 +40,8 @@ class App_CLI extends AbstractView
      * it's in the same folder, but you can move it one folder up ".." or
      * inside "config" sub-folder by setting value to 'config' to better
      * reflect your application layout.
+     *
+     * @var string
      */
     public $config_location = '.';
 
@@ -59,72 +53,93 @@ class App_CLI extends AbstractView
      * If you are loading additional config later, use readConfig() instead
      *
      * Order of this array is important.
+     *
+     * @var array
      */
-    public $config_files = array('config-default','config');
+    public $config_files = array('config-default', 'config');
 
     /**
-     * Contains list of loaded config files
+     * Contains list of loaded config files.
+     *
+     * @var array
      */
     public $config_files_loaded = array();
 
     /**
-     * Without logger, API will dump out errors and exceptions in a very brief
+     * Without logger, APP will dump out errors and exceptions in a very brief
      * and straigtforward way. Logger is a controller which enhances error
      * output and in most cases you do need one. Logger can be further configured
      * to either output detailed errors or show brief message instead.
      *
      * @see Logger
+     * @var Logger
      */
-    public $logger=null;
+    public $logger = null;
 
     /**
-     * If you want to use your own logger class, redefine this property
+     * If you want to use your own logger class, redefine this property.
+     *
+     * @param string
      */
-    public $logger_class='Logger';
+    public $logger_class = 'Logger';
 
     /**
      * PathFinder is a controller which is responsible for locating resources,
-     * such as PHP includes, JavaScript files, templates, etc. API Initializes
+     * such as PHP includes, JavaScript files, templates, etc. APP Initializes
      * PathFinder as soon as possible, then defines "Locations" which describe
      * type of data found in different folders.
+     *
+     * @var PathFinder
      */
-    public $pathfinder=null;
+    public $pathfinder = null;
 
     /**
      * If you would want to use your own PathFinder class, you must change
      * this property and include it.
+     *
+     * @var string
      */
-    protected $pathfinder_class='PathFinder';
+    protected $pathfinder_class = 'PathFinder';
 
     /**
-     * Change a different Page Manager class
+     * PageManager object
+     *
+     * @see Controller_PageManager::init()
+     * @var Controller_PageManager
      */
-    protected $pagemanager_class='Controller_PageManager';
+    public $pm;
 
     /**
-     * Set to array('debug'=>true) to debug Page Manager
+     * Change a different Page Manager class.
+     *
+     * @var string
      */
-    protected $pagemanager_options=null;
-
+    protected $pagemanager_class = 'Controller_PageManager';
 
     /**
-     * This is a major version of Agile Toolkit. The API of Agile Toolkit is
+     * Set to array('debug' => true) to debug Page Manager.
+     *
+     * @var array
+     */
+    protected $pagemanager_options = null;
+
+    /**
+     * This is a major version of Agile Toolkit. The APP of Agile Toolkit is
      * very well established and changes rarely. Your application would generally
      * be compatible throughout the same major version of Agile Tooolkit.
      *
      * @see requires();
+     * @var string
      */
-    public $atk_version=4.3;
+    public $atk_version = 4.3;
 
     /**
      * If you want Agile Toolkit to be compatible with 4.2 version, include
-     * compatibility controller. For more information see:
+     * compatibility controller.
      *
-     * http://www.agiletoolkit.org/compat42
-     *
-     * @var boolean
+     * @var bool|Controller_Compat42
      */
-    public $compat_42=false;
+    public $compat_42 = false;
 
     /**
      * Some Agile Toolkit classes contain references to profiler. Profiler
@@ -137,8 +152,10 @@ class App_CLI extends AbstractView
      * 4-symbol sequence "/ ** /" (no spaces). If you want to speed up Agile
      * Toolkit further, you can eliminate all lines started with this sequence
      * from your source code.
+     *
+     * @var object
      */
-    /**/public $pr;
+    public $pr;
 
     /**
      * Object in Agile Toolkit contain $name property which is derrived from
@@ -156,23 +173,29 @@ class App_CLI extends AbstractView
      *
      * We recommend you to increase SUHOSIN get limits if you encounter any
      * problems. Set this value to "false" to turn off name shortening.
+     *
+     * @var int
      */
-    public $max_name_length=60;
+    public $max_name_length = 60;
 
     /**
      * As more names are shortened, the substituted part is being placed into
      * this hash and the value contains the new key. This helps to avoid creating
      * many sequential prefixes for the same character sequenece.
+     *
+     * @var array
      */
-    public $unique_hashes=array();
+    public $unique_hashes = array();
 
     /**
      * This is the default locale for the application. You change this manually
-     * inside application API class or use some controller which will pull this
+     * inside application APP class or use some controller which will pull this
      * variable out of the URL. This variable will be respected throughout the
-     * framework
+     * framework.
+     *
+     * @var string
      */
-    public $locale='en_US';
+    public $locale = 'en_US';
 
     // {{{ Start-up of application
     /**
@@ -191,29 +214,30 @@ class App_CLI extends AbstractView
      * of security.
      *
      * @param string $realm Will become $app->name
+     * @param array $options
      */
-    function __construct($realm = null)
+    public function __construct($realm = null, $options = array())
     {
-        if (!$realm) {
-            $realm=get_class($this);
+        parent::__construct($options);
+        if ($realm === null) {
+            $realm = get_class($this);
         }
         $this->owner = $this;
-        $this->name  = $realm;
-        $this->api   = // compatibility
-        $this->app   = $this;
+        $this->name = $realm;
+        $this->app = $this;
+        $this->api = $this->app; // compatibility with ATK 4.2 and lower
 
         // Profiler is a class for benchmarking your application. All calls to pr
-        /**/$this->pr=new Dummy();
+        /**/$this->pr = new Dummy();
 
         try {
-
             $this->_beforeInit();
 
             $this->init();
         } catch (Exception $e) {
 
-            // This exception is used to abort initialisation of the objects but when
-            // normal rendering is still required
+            // This exception is used to abort initialisation of the objects,
+            // but when normal rendering is still required
             if ($e instanceof Exception_StopInit) {
                 return;
             }
@@ -225,9 +249,9 @@ class App_CLI extends AbstractView
 
     /**
      * Finds out which page is requested. We don't need this method
-     * for CLI, but others might need it
+     * for CLI, but others might need it.
      */
-    function _beforeInit()
+    public function _beforeInit()
     {
         // Loads all configuration files
         $this->readAllConfig();
@@ -238,7 +262,7 @@ class App_CLI extends AbstractView
     // {{{ Management of Global Methods
     /**
      * Agile Toolkit objects allow method injection. This is quite similar
-     * to technique used in JavaScript:
+     * to technique used in JavaScript:.
      *
      *     obj.test = function() { .. }
      *
@@ -251,15 +275,13 @@ class App_CLI extends AbstractView
      * methods like that, but this technique can be used for adding
      * backward-compatibility or debugging, etc.
      *
-     * @param string   $name     Name of the method
-     * @param callable $callable Calls your function($object, $arg1, $arg2)
-     *
      * @see AbstractObject::hasMethod()
      * @see AbstractObject::__call()
      *
-     * @return void
+     * @param string   $name     Name of the method
+     * @param callable $callable Calls your function($object, $arg1, $arg2)
      */
-    function addGlobalMethod($name, $callable)
+    public function addGlobalMethod($name, $callable)
     {
         if ($this->hasMethod($name)) {
             throw $this->exception('Registering method twice')
@@ -267,34 +289,51 @@ class App_CLI extends AbstractView
         }
         $this->addHook('global-method-'.$name, $callable);
     }
+
     /**
-     * Returns if a global method with such name was defined
+     * Returns if a global method with such name was defined.
      *
      * @param string $name Name of the method
      *
-     * @return boolean if registered
+     * @return bool if registered
      */
-    function hasGlobalMethod($name){
+    public function hasGlobalMethod($name)
+    {
         return isset($this->hooks['global-method-'.$name]);
     }
-    /** Removes global method */
-    function removeGlobalMethod($name){
+
+    /**
+     * Removes global method.
+     *
+     * @param string $name
+     */
+    public function removeGlobalMethod($name)
+    {
         $this->removeHook('global-method-'.$name);
     }
     // }}}
 
     // {{{ Localization
-    /** Redefine this function to introduce your localization. Agile Toolkit will pass all system strings
-     * through this method. If some methods are not properly passed through, please fork Agile Toolkit in
-     * http://github.com/atk4/atk4/ , modify, commit, push your fix and notify authors of Agile Toolkit
-     * using contact form on http://agiletoolkit.org/contact
+    /**
+     * Redefine this function to introduce your localization.
+     * Agile Toolkit will pass all system strings through this method.
+     * If some methods are not properly passed through, please fork
+     * Agile Toolkit from http://github.com/atk4/atk4/ , modify, commit, push
+     * your fix and notify authors of Agile Toolkit using contact form on
+     * http://agiletoolkit.org/contact.
      *
      * See file CONTRIBUTING
+     *
+     * @param string $str String which needs localization
+     *
+     * @return string Localized string
      */
-    function _($str){
-
-        $x=$this->hook('localizeString',array($str));
-        if($x)return $x[0];
+    public function _($str)
+    {
+        $x = $this->hook('localizeString', array($str));
+        if ($x) {
+            return $x[0];
+        }
 
         return $str;
     }
@@ -304,260 +343,380 @@ class App_CLI extends AbstractView
     /**
      * Find relative path to the resource respective to the current directory.
      *
-     * @param  [type] $type     [description]
-     * @param  string $filename [description]
-     * @param  string $return   [description]
-     * @return [type]           [description]
-     */
-    function locate($type,$filename='',$return='relative'){
-        return $this->pathfinder->locate($type,$filename,$return);
-    }
-    /**
-     * Calculate URL pointing to specified resource
+     * @param string $type
+     * @param string $filename
+     * @param string $return
      *
-     * @param  [type] $type     [description]
-     * @param  string $filename [description]
-     * @return [type]           [description]
+     * @return string|object|array
      */
-    function locateURL($type,$filename=''){
-        return $this->pathfinder->locate($type,$filename,'url');
+    public function locate($type, $filename = '', $return = 'relative')
+    {
+        return $this->pathfinder->locate($type, $filename, $return);
     }
+
     /**
-     * Return full system path to specified resource
+     * Calculate URL pointing to specified resource.
      *
-     * @param  [type] $type     [description]
-     * @param  string $filename [description]
-     * @return [type]           [description]
+     * @param string $type
+     * @param string $filename
+     *
+     * @return string|object|array
      */
-    function locatePath($type,$filename=''){
-        return $this->pathfinder->locate($type,$filename,'path');
+    public function locateURL($type, $filename = '')
+    {
+        return $this->pathfinder->locate($type, $filename, 'url');
     }
+
     /**
-     * Add new location with additional resources
+     * Return full system path to specified resource.
      *
-     * @param [type] $contents [description]
-     * @param [type] $obsolete [description]
+     * @param string $type
+     * @param string $filename
+     *
+     * @return string|object|array
      */
-    function addLocation($contents, $obsolete=undefined){
-        if($obsolete !== undefined) throw $this->exception('Use a single argument for addLocation');
+    public function locatePath($type, $filename = '')
+    {
+        return $this->pathfinder->locate($type, $filename, 'path');
+    }
+
+    /**
+     * Add new location with additional resources.
+     *
+     * @param array $contents
+     * @param mixed $obsolete
+     *
+     * @return PathFinder_Location
+     */
+    public function addLocation($contents, $obsolete = UNDEFINED)
+    {
+        if ($obsolete !== UNDEFINED) {
+            throw $this->exception('Use a single argument for addLocation');
+        }
+
         return $this->pathfinder->addLocation($contents);
     }
+
     /**
      * Returns base URL of this Web application installation. If you require
-     * link to a page, you can use URL::useAbsoluteURL();
+     * link to a page, you can use URL::useAbsoluteURL();.
      *
-     * @see URL::useAbsoluteURL() */
-    function getBaseURL(){
+     * @see URL::useAbsoluteURL()
+     *
+     * @return string
+     */
+    public function getBaseURL()
+    {
         return $this->pm->base_path;
     }
+
     /**
      * Generates URL for specified page. Useful for building links on pages or emails. Returns URL object.
      *
-     * @param  [type] $page      [description]
-     * @param  array  $arguments [description]
-     * @return [type]            [description]
+     * @param mixed $page
+     * @param array $arguments
+     *
+     * @return URL
      */
-    function url($page=null,$arguments=array()){
-        if(is_object($page) && $page instanceof URL){
+    public function url($page = null, $arguments = array())
+    {
+        if (is_object($page) && $page instanceof URL) {
             // we receive URL
             return $page->setArguments($arguments);
         }
-        if(is_array($page)){
-            $p=$page[0];
+        if (is_array($page)) {
+            $p = $page[0];
             unset($page[0]);
-            $arguments=$page;
-            $page=$p;
+            $arguments = $page;
+            $page = $p;
         }
-        $url=$this->add('URL');
-        unset($this->elements[$url->short_name]);   // garbage collect URLs
-        if(strpos($page,'http://')===0 || strpos($page,'https://')===0) $url->setURL($page);
-        else $url->setPage($page);
+        /** @type URL $url */
+        $url = $this->add('URL');
+        unset($this->elements[$url->short_name]); // garbage collect URLs
+        if (strpos($page, 'http://') === 0 || strpos($page, 'https://') === 0) {
+            $url->setURL($page);
+        } else {
+            $url->setPage($page);
+        }
+
         return $url->setArguments($arguments);
     }
 
-    function getStickyArguments(){
+    /**
+     * @todo Description
+     *
+     * @return array
+     */
+    public function getStickyArguments()
+    {
         return array();
     }
     // }}}
 
     // {{{ Error handling
-    /** Initialize logger or return existing one */
-    function getLogger($class_name=undefined){
-        if(is_null($this->logger)){
-            $this->logger=$this->add($class_name===undefined?$this->logger_class:$class_name);
+    /**
+     * Initialize logger or return existing one.
+     *
+     * @param string $class_name
+     *
+     * @return Logger
+     */
+    public function getLogger($class_name = UNDEFINED)
+    {
+        if (is_null($this->logger)) {
+            $this->logger = $this->add($class_name === UNDEFINED
+                                            ? $this->logger_class
+                                            : $class_name);
         }
+
         return $this->logger;
     }
-    /** Is executed if exception is raised during execution. Re-define to have custom handling of exceptions system-wide */
-    function caughtException($e){
-        $this->hook('caught-exception',array($e));
-        echo get_class($e),": ".$e->getMessage();
+
+    /**
+     * Is executed if exception is raised during execution.
+     * Re-define to have custom handling of exceptions system-wide.
+     *
+     * @param Exception $e
+     */
+    public function caughtException($e)
+    {
+        $this->hook('caught-exception', array($e));
+        echo get_class($e), ': '.$e->getMessage();
         exit;
     }
-    /** @obsolete */
-    function outputWarning($msg,$shift=0){
-        if($this->hook('output-warning',array($msg,$shift)))return true;
+
+    /**
+     * @deprecated 4.3.2
+     */
+    public function outputWarning($msg, $shift = 0)
+    {
+        if ($this->hook('output-warning', array($msg, $shift))) {
+            return true;
+        }
         echo "warning: $msg\n";
     }
-    /** @obsolete */
-    function outputDebug($object, $msg, $shift=0){
-        if($this->hook('output-debug',array($object, $msg,$shift)))return true;
+
+    /**
+     * @deprecated 4.3.2
+     */
+    public function outputDebug($object, $msg, $shift = 0)
+    {
+        if ($this->hook('output-debug', array($object, $msg, $shift))) {
+            return true;
+        }
         echo "debug: $msg\n";
     }
     // }}}
 
     // {{{ Configuration File Handling
-
     /**
-     * readAllConfig - will include all files as they are defined in
-     * $this->config_files from folder $config_location
+     * Will include all files as they are defined in $this->config_files
+     * from folder $config_location.
      */
-    function readAllConfig() {
+    public function readAllConfig()
+    {
         // If configuration files are not there - will silently ignore
         foreach ($this->config_files as $file) {
-            $this->readConfig ($file);
+            $this->readConfig($file);
         }
 
-        $tz = $this->getConfig('timezone',null);
-        if(!is_null($tz) && function_exists('date_default_timezone_set')){
+        $tz = $this->getConfig('timezone', null);
+        if (!is_null($tz) && function_exists('date_default_timezone_set')) {
             // with seting default timezone
             date_default_timezone_set($tz);
-        }else{
-            if(!ini_get('date.timezone'))ini_set('date.timezone','UTC');
+        } else {
+            if (!ini_get('date.timezone')) {
+                ini_set('date.timezone', 'UTC');
+            }
         }
     }
 
     /**
-     * Executed when trying to access config parameter which is not find in the file
+     * Executed when trying to access config parameter which is not find in the file.
      *
-     * @param  [type] $default       [description]
-     * @param  [type] $exceptiontext [description]
-     * @return [type]                [description]
+     * @param string $default
+     * @param string $exceptiontext
      */
-    function configExceptionOrDefault($default,$exceptiontext){
-        if($default!='_config_get_false')return $default;
+    public function configExceptionOrDefault($default, $exceptiontext)
+    {
+        if ($default != '_config_get_false') {
+            return $default;
+        }
         throw new BaseException($exceptiontext);
     }
+
     /**
-     * Read config file and store it in $this->config. Use getConfig() to access
+     * Read config file and store it in $this->config. Use getConfig() to access.
+     *
+     * @param string $file Filename
+     *
+     * @return bool
      */
-    function readConfig($file='config.php'){
+    public function readConfig($file = 'config.php')
+    {
         $orig_file = $file;
 
-        if (strpos ($file,'.php') != strlen($file)-4 ) {
+        if (strpos($file, '.php') != strlen($file) - 4) {
             $file .= '.php';
         }
 
-        if(strpos($file,'/')===false){
-            $file=getcwd().'/'.$this->config_location.'/'.$file;
+        if (strpos($file, '/') === false) {
+            $file = getcwd().'/'.$this->config_location.'/'.$file;
         }
 
         if (file_exists($file)) {
             // some tricky thing to make config be read in some cases it could not in simple way
             unset($config);
 
-            $config=&$this->config;
-            $this->config_files_loaded[]=$file;
+            $config = &$this->config;
+            $this->config_files_loaded[] = $file;
             include $file;
 
             unset($config);
+
             return true;
         }
 
         return false;
     }
+
     /**
-     * Manually set configuration option
+     * Manually set configuration option.
      *
-     * @param array  $config [description]
-     * @param [type] $val    [description]
+     * @param array $config
+     * @param mixed $val
      */
-    function setConfig($config=array(),$val=UNDEFINED){
-        if($val!==UNDEFINED)return $this->setConfig(array($config=>$val));
-        if(!$config)$config=array();
-        if(!$this->config)$this->config=array();
-        $this->config=array_merge($this->config,$config);
+    public function setConfig($config = array(), $val = UNDEFINED)
+    {
+        if ($val !== UNDEFINED) {
+            return $this->setConfig(array($config => $val));
+        }
+        $this->config = array_merge($this->config ?: array(), $config ?: array());
     }
-    /** Load config if necessary and look up corresponding setting */
-    function getConfig($path, $default_value = undefined){
-        /**
+
+    /**
+     * Load config if necessary and look up corresponding setting.
+     *
+     * @param string $path
+     * @param mixed $default_value
+     *
+     * @return string
+     */
+    public function getConfig($path, $default_value = UNDEFINED)
+    {
+        /*
          * For given path such as 'dsn' or 'logger/log_dir' returns
          * corresponding config value. Throws ExceptionNotConfigured if not set.
          *
          * To find out if config is set, do this:
          *
-         * $var_is_set=true;
-         * try { $app->getConfig($path); } catch ExceptionNotConfigured($e) { $var_is_set=false; };
+         * $var_is_set = true;
+         * try { $app->getConfig($path); } catch ExceptionNotConfigured($e) { $var_is_set=false; }
          */
-        $parts = explode('/',$path);
+        $parts = explode('/', $path);
         $current_position = $this->config;
-        foreach($parts as $part){
-            if(!array_key_exists($part,$current_position)){
-                if($default_value!==undefined)return $default_value;
-                throw $this->exception("Configuration parameter is missing in config.php",'NotConfigured')
-                    ->addMoreInfo('config_files_loaded',$this->config_files_loaded)
-                    ->addMoreInfo("missign_line"," \$config['".join("']['",explode('/',$path))."']");
-            }else{
+        foreach ($parts as $part) {
+            if (!array_key_exists($part, $current_position)) {
+                if ($default_value !== UNDEFINED) {
+                    return $default_value;
+                }
+                throw $this->exception('Configuration parameter is missing in config.php', 'NotConfigured')
+                    ->addMoreInfo('config_files_loaded', $this->config_files_loaded)
+                    ->addMoreInfo('missign_line', " \$config['".implode("']['", explode('/', $path))."']");
+            } else {
                 $current_position = $current_position[$part];
             }
         }
+
         return $current_position;
     }
     // }}}
 
     // {{{ Version handling
-    /** Determine version of Agile Toolkit or specified plug-in */
-    private $version_cache=null;
-    function getVersion($of='atk'){
+    private $version_cache = null;
+    /**
+     * Determine version of Agile Toolkit or specified plug-in.
+     *
+     * @param string $of
+     *
+     * @return string
+     */
+    public function getVersion($of = 'atk')
+    {
         // TODO: get version of add-on
-        if(!$this->version_cache){
-            $f=$this->app->pathfinder->atk_location->base_path.DIRECTORY_SEPARATOR.'VERSION';
-            if(file_exists($f)){
-                $this->version_cache=trim(file_get_contents($f));
-            }else{
-                $this->version_cache='4.0.1';
+        if (!$this->version_cache) {
+            $f = $this->app->pathfinder->atk_location->base_path.DIRECTORY_SEPARATOR.'VERSION';
+            if (file_exists($f)) {
+                $this->version_cache = trim(file_get_contents($f));
+            } else {
+                $this->version_cache = '4.0.1';
             }
         }
+
         return $this->version_cache;
     }
-    /** Verifies version. Should be used by addons. For speed improvement, redefine this into empty function */
-    function requires($addon='atk',$v,$location = null){
-        $cv=$this->getVersion($addon);
-        if(version_compare($cv,$v)<0){
-            if($addon=='atk'){
-                $e=$this->exception('Agile Toolkit version is too old');
-            }else{
-                $e=$this->exception('Add-on is outdated')
-                    ->addMoreInfo('addon',$addon);
+
+    /**
+     * Verifies version. Should be used by addons. For speed improvement,
+     * redefine this into empty function.
+     *
+     * @param string $addon
+     * @param string $v
+     * @param string $location
+     *
+     * @return bool
+     */
+    public function requires($addon = 'atk', $v, $location = null)
+    {
+        $cv = $this->getVersion($addon);
+        if (version_compare($cv, $v) < 0) {
+            if ($addon == 'atk') {
+                $e = $this->exception('Agile Toolkit version is too old');
+            } else {
+                $e = $this->exception('Add-on is outdated')
+                    ->addMoreInfo('addon', $addon);
             }
-            $e->addMoreInfo('required',$v)
-                ->addMoreInfo('you have',$cv);
-            if($location)$e->addMoreInfo('download_location',$location);
+            $e->addMoreInfo('required', $v)
+                ->addMoreInfo('you have', $cv);
+            if ($location !== null) {
+                $e->addMoreInfo('download_location', $location);
+            }
             throw $e;
         }
 
         // Possibly we need to enable compatibility version
-        if($addon=='atk'){
-            if(
-                version_compare($v,'4.2')<0 &&
-                version_compare($v,'4.1.4')>=0
-            ){
+        if ($addon == 'atk') {
+            if (version_compare($v, '4.2') < 0 && version_compare($v, '4.1.4') >= 0) {
                 $this->add('Controller_Compat');
+
                 return true;
             }
         }
+
         return true;
     }
+
     /** @obsolete use @requires */
-    function versionRequirement($v,$location = null){
-        return $this->requires('atk',$v,$location);
+    public function versionRequirement($v, $location = null)
+    {
+        return $this->requires('atk', $v, $location);
     }
     // }}}
 
     // {{{ Database connection handling
-    /** Use database configuration settings from config file to establish default connection */
-    function dbConnect($dsn=null){
-        return $this->db=$this->add('DB')->connect($dsn);
+    /**
+     * Use database configuration settings from config file to establish default connection.
+     *
+     * @param mixed $dsn
+     *
+     * @return DB
+     */
+    public function dbConnect($dsn = null)
+    {
+        $this->db = $this->add('DB');
+        /** @type DB $this->db */
+
+        return $this->db->connect($dsn);
     }
     // }}}
 
@@ -574,11 +733,11 @@ class App_CLI extends AbstractView
      * @param string $name      String to process
      * @param string $separator Character acting as separator
      *
-     * @return string           Normalized string
+     * @return string Normalized string
      */
-    function normalizeName($name, $separator = '_')
+    public function normalizeName($name, $separator = '_')
     {
-        if (strlen($separator)==0) {
+        if (strlen($separator) == 0) {
             return preg_replace('|[^a-z0-9]|i', '', $name);
         }
 
@@ -589,10 +748,13 @@ class App_CLI extends AbstractView
 
         return $name;
     }
+
     /**
      * First normalize class name, then add specified prefix to
      * class name if it's passed and not already added.
      * Class name can have namespaces and they are treated prefectly.
+     *
+     * If object is passed as $name parameter, then same object is returned.
      *
      * Example: normalizeClassName('User','Model') == 'Model_User';
      *
@@ -601,39 +763,42 @@ class App_CLI extends AbstractView
      *
      * @return string|object Full, normalized class name or received object
      */
-    function normalizeClassName($name, $prefix = null)
+    public function normalizeClassName($name, $prefix = null)
     {
         if (!is_string($name)) {
             return $name;
         }
 
         $name = str_replace('/', '\\', $name);
-        if ($prefix) {
-            $class = ltrim(strrchr($name, '\\'), '\\')?:$name;
+        if ($prefix !== null) {
+            $class = ltrim(strrchr($name, '\\'), '\\') ?: $name;
             $prefix = ucfirst($prefix);
-            if (strpos($class, $prefix)!==0) {
+            if (strpos($class, $prefix) !== 0) {
                 $name = preg_replace('|^(.*\\\)?(.*)$|', '\1'.$prefix.'_\2', $name);
             }
         }
+
         return $name;
     }
+
     /**
-     * Encodes HTML special chars, but not already encoded ones by default
+     * Encodes HTML special chars.
+     * By default does not encode already encoded ones.
      *
      * @param string $s
-     * @param int $flags
-     * @param string $encoding
-     * @param bool $double_encode
+     * @param int    $flags
+     * @param string $encode
+     * @param bool   $double_encode
      *
      * @return string
      */
-    function encodeHtmlChars($s, $flags = undefined, $encode = undefined, $double_encode = false)
+    public function encodeHtmlChars($s, $flags = null, $encode = null, $double_encode = false)
     {
-        if ($flags === undefined) {
+        if ($flags === null) {
             $flags = ENT_COMPAT;
         }
-        if ($encode === undefined) {
-            $encode = ini_get("default_charset") ?: 'UTF-8';
+        if ($encode === null) {
+            $encode = ini_get('default_charset') ?: 'UTF-8';
         }
 
         return htmlspecialchars($s, $flags, $encode, $double_encode);

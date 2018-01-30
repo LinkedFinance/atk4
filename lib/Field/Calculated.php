@@ -1,12 +1,22 @@
 <?php
-
-abstract class Field_Calculated extends Field_Base {
+/**
+ * Undocumented.
+ */
+abstract class Field_Calculated extends Field_Base
+{
     protected $expression = null;
 
-    function setExpression($expression) {
+    public function setExpression($expression)
+    {
         $this->expression = $expression;
+
         return $this;
     }
 
-    abstract function getValue($model, $data);
+    public function updateSelectQuery()
+    {
+        return $this;
+    }
+
+    abstract public function getValue($model, $data);
 }

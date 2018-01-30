@@ -2,40 +2,56 @@
 /**
  * Addon Controller is used to help installation of your add-on. If your
  * add-on needs to perform some specific actions during the installation,
- * such as creating a symling for asset access or
+ * such as creating a symling for asset access or.
  */
-class Controller_Addon extends AbstractController {
+class Controller_Addon extends AbstractController
+{
+    /** @var string */
+    public $atk_version = '4.3';
 
-    public $atk_version='4.3';
-
+    /** @var string */
     public $namespace = __NAMESPACE__;
 
-    public $addon_base_path=null;
+    /** @var string|object|array */
+    public $addon_base_path = null; // should be only string, but $app->locate can return object and array too
 
-    public $has_assets=false;
+    /** @var bool */
+    public $has_assets = false;
 
+    /** @var string */
     public $addon_name;
-
-    public $api_var;
 
     // object with information from json file
     public $addon_obj;
 
+    /** @var array */
     public $addon_private_locations = array();
-    public $addon_public_locations  = array();
 
+    /** @var array */
+    public $addon_public_locations = array();
+
+    /** @var bool */
     public $with_pages = false;
 
-    function init() {
-        parent::init();
-        $this->api->requires('atk',$this->atk_version);
+    /** @var PathFinder_Location */
+    public $location;
 
-        if(!$this->addon_name)
+    public $api_var; // ???
+
+    public $base_path; // ???
+
+    public function init()
+    {
+        parent::init();
+        $this->app->requires('atk', $this->atk_version);
+
+        if (!$this->addon_name) {
             throw $this->exception('Addon name must be specified in it\'s Controller');
+        }
 
         $this->namespace = substr(get_class($this), 0, strrpos(get_class($this), '\\'));
 
-        $this->addon_base_path=$this->api->locatePath('addons',$this->namespace);
+        $this->addon_base_path = $this->app->locatePath('addons', $this->namespace);
 
         if (count($this->addon_private_locations) || count($this->addon_public_locations)) {
             $this->addAddonLocations($this->base_path);
@@ -46,58 +62,62 @@ class Controller_Addon extends AbstractController {
      * This routes certain prefixes to an add-on. Call this method explicitly
      * from init() if necessary.
      */
-    function routePages($page_prefix) {
-        //if ($this->api instanceof api_Frontend) {
-            $this->api->routePages($page_prefix, $this->namespace);
-       // }
+    public function routePages($page_prefix)
+    {
+        if ($this->app instanceof App_Frontend) {
+            /** @type App_Frontend $this->app */
+            $this->app->routePages($page_prefix, $this->namespace);
+        }
     }
 
-    function addAddonLocations($base_path) {
-        $this->api->pathfinder->addLocation($this->addon_private_locations)
+    public function addAddonLocations($base_path)
+    {
+        $this->app->pathfinder->addLocation($this->addon_private_locations)
                 ->setBasePath($base_path.'/../'.$this->addon_obj->get('addon_full_path'));
 
-        $this->api->pathfinder->addLocation($this->addon_public_locations)
+        $this->app->pathfinder->addLocation($this->addon_public_locations)
                 ->setBasePath($base_path.'/'.$this->addon_obj->get('addon_public_symlink'))
-                ->setBaseURL($this->api->url('/').$this->addon_obj->get('addon_symlink_name'));
+                ->setBaseURL($this->app->url('/').$this->addon_obj->get('addon_symlink_name'));
     }
 
     /**
      * This defines the location data for the add-on. Call this method
      * explicitly from init() if necessary.
      */
-    function addLocation($contents,$public_contents=null) {
+    public function addLocation($contents, $public_contents = null)
+    {
         $this->location = $this->app->pathfinder->addLocation($contents);
         $this->location->setBasePath($this->addon_base_path);
-
 
         // If class has assets, those have probably been installed
         // into the public location
         // TODO: test
         if ($this->has_assets) {
-
-            if(is_null($public_contents)) {
-                $public_contents=array(
-                    'public'=>'.',
-                    'js'=>'js',
-                    'css'=>'css',
+            if (is_null($public_contents)) {
+                $public_contents = array(
+                    'public' => '.',
+                    'js' => 'js',
+                    'css' => 'css',
                 );
             }
 
-            $this->location = $this->api->pathfinder->public_location->addRelativeLocation($this->addon_base_path,$contents);
+            $this->location = $this->app->pathfinder->public_location
+                ->addRelativeLocation($this->addon_base_path, $contents);
         }
 
         return $this->location;
     }
 
     /**
-     * This method will rely on location data to link
+     * This method will rely on location data to link.
      */
-    function installAssets() {
+    public function installAssets()
+    {
 
         // Creates symlink inside /public/my-addon/ to /vendor/my/addon/public
 
         // TODO: if $this->namespace contains slash, then created
-        // this folder under $api->pathfinder->public_location
+        // this folder under $app->pathfinder->public_location
         //
         // TODO: create a symlink such as $this->namespace pointing
         // to
@@ -126,19 +146,22 @@ class Controller_Addon extends AbstractController {
      * The information about the private key specifically issued to the
      * user will be stored in configuration file.
      */
-    function licenseCheck($type,$software='atk',$pubkey=null,$pubkey_md5=null) {
-        // TODO: move stuff here from ApiWeb -> licenseCheck
+    public function licenseCheck($type, $software = 'atk', $pubkey = null, $pubkey_md5 = null)
+    {
+        // TODO: move stuff here from App_Web -> licenseCheck
         //
         // TODO: we might need to hardcode hey signature or MD
     }
 
-    function installDatabase() {
+    public function installDatabase()
+    {
         // TODO: If add-on comes with some database requirement, then this
         // method should execute the migrations which will install and/or
         // upgrade the database.
     }
 
-    function checkConfiguration() {
+    public function checkConfiguration()
+    {
         // Addon may requrie user to add some stuff into configuration file.
         //
         // This method must return 'true' or 'false' if some configuration
@@ -155,5 +178,4 @@ class Controller_Addon extends AbstractController {
         // if admin is logging in or at least provide some useful
         // information.
     }
-
 }

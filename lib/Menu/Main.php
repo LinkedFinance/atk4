@@ -1,8 +1,18 @@
 <?php
-class Menu_Main extends Menu_Objective {
+/**
+ * Undocumented
+ */
+class Menu_Main extends Menu_Objective
+{
     public $current_menu_class = 'atk-state-active';
 
-    function defaultTemplate() {
+    /**
+     * Default template.
+     *
+     * @return array|string
+     */
+    public function defaultTemplate()
+    {
         return array('menu/main');
     }
 }
